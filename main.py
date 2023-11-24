@@ -6,7 +6,7 @@ import itertools
 import numpy as np
 import time
 import list_list
-
+from click import click_url
 # Lamoda 
 # https://www.lamoda.ru/c/2968/shoes-krossovki-kedy/?display_locations=outlet&is_sale=1&brands=1061,30349,1163,4035,27481
 
@@ -22,7 +22,7 @@ def lamoda_women_sale(url):
                 soup = bs(r.text, 'html.parser')
                 # title 
                 title_name = soup.find_all('div', class_='x-product-card-description__product-name')
-                if len(title_name)>0 and i<20:
+                if len(title_name)>0 and i<2:
                     # old_price
                     old_price = soup.find_all('span', class_='x-product-card-description__price-old')
                     #brand
@@ -40,7 +40,10 @@ def lamoda_women_sale(url):
                         list_list.old_price_list.append(old_prices.get_text())
                         list_list.brand_list.append(brand_names.get_text())
                         list_list.new_price_list.append(new_prices.get_text())
-                        url_name_result = LINK_DOMEN + url_names.get('href')   
+                        # сокращение ссылок
+                        url_name_click = LINK_DOMEN + url_names.get('href')   
+                        url_name_result = click_url(url_name_click)
+                        
                         list_list.link_list.append(url_name_result)
                         list_list.table_matrix.append([name.get_text(), brand_names.get_text(), old_prices.get_text(), new_prices.get_text(), url_name_result])
                     print(tabulate(list_list.table_matrix))
@@ -49,7 +52,7 @@ def lamoda_women_sale(url):
                     time.sleep(2)
                 else:
                     list_list.shop_list['Название кроссовок'] = list_list.name_list
-                    list_list.shop_list['Брэнд'] = list_list.brand_list
+                    list_list.shop_list['Брeнд'] = list_list.brand_list
                     list_list.shop_list['Старая цена'] = list_list.old_price_list
                     list_list.shop_list['Новая цена'] = list_list.new_price_list
                     list_list.shop_list['Ссылка на товар'] = list_list.link_list
