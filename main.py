@@ -1,3 +1,4 @@
+
 import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
@@ -7,11 +8,13 @@ import numpy as np
 import time
 import list_list
 from click import click_url
-# Lamoda 
-# https://www.lamoda.ru/c/2968/shoes-krossovki-kedy/?display_locations=outlet&is_sale=1&brands=1061,30349,1163,4035,27481
+import cfscrape
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+import time
 
-
-def lamoda_women_sale(url):
+def lamoda_catalog(url):
     i = 1
     while True:
         URL_TEMPLATE = url+f'&page={i}'
@@ -51,7 +54,7 @@ def lamoda_women_sale(url):
                     print(i)
                     time.sleep(2)
                 else:
-                    list_list.shop_list['Название кроссовок'] = list_list.name_list
+                    list_list.shop_list['Название товара'] = list_list.name_list
                     list_list.shop_list['Брeнд'] = list_list.brand_list
                     list_list.shop_list['Старая цена'] = list_list.old_price_list
                     list_list.shop_list['Новая цена'] = list_list.new_price_list
@@ -66,10 +69,34 @@ def lamoda_women_sale(url):
         except Exception:
             print('Конец парсинга, ошибка!')
             break
+
+def ozon_catalog(url):
+    from selenium.webdriver.chrome.options import Options
+    options = Options()
+    options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
+    driver = webdriver.Chrome()
+    driver.get(url)
+    driver.maximize_window()
+    driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
+    time.sleep(1)
+    main_page = driver.page_source
+    soup = bs(main_page, 'html.parser')
+    title_name = soup.find_all('div', class_='b7a ab9 ba9 vi')
+
+    for i in title_name:
+        print(i.get_text())
+    time.sleep(1)
+    return driver.quit()
+    
+
+def sneaker_store(url):
+    r = requests.get(url)
+    print(r.status_code)
     
 if __name__=='__main__':
-    lamoda_women_sale('https://www.lamoda.ru/c/4152/default-men/?labels=36914&display_locations=all&sf=235&ad_id=909823')
+    lamoda_catalog('https://www.lamoda.ru/c/2968/shoes-krossovki-kedy/?display_locations=outlet&is_sale=1&brands=1061,30349,1163,4035,27481')
 else:
     print(False)
+
     
   
