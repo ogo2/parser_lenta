@@ -12,8 +12,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from lxml import etree
-
+import delete_text
 
 def lamoda_catalog(url):
     i = 1
@@ -111,10 +110,11 @@ class Ozon:
                 df.to_excel('table/xlsx/shop_ozon.xlsx')
                 print('Конец парсинга, товара больше нет!')
                 return driver.quit()
+    
     def ozon_stock():
         options = Options()
         options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
-        driver = webdriver.Chrome()
+        driver = webdriver.Firefox()
         URL = 'https://seller-edu.ozon.ru/fbo/warehouses/adresa-skladov-fbo'
         driver.get(URL)
         driver.maximize_window()
@@ -123,9 +123,59 @@ class Ozon:
         main_page = driver.page_source
         soup = bs(main_page, 'html.parser')
         elem = soup.find_all('p', class_='paragraph paragraph_zFY6U')
+        name_city = soup.find_all('h3', class_='heading_B-bMK heading2 heading2_AQ929 heading-400_UXsA+')
+        
+        for i in name_city:
+            if i.get_text().startswith('Пункты выдачи'):
+                pass
+            else:
+                list_list.name_city_list.append(i.get_text())
+        flag = 0
+        # обработка текстовых данных с информацией о названии в системе
         for i in elem:
-            if i.get_text().startswith('Название в системе:'):
-                print(i.get_text())
+            if i.get_text().startswith('Название в системе'):   #проверка на начало названия
+                start_name = i.get_text()
+                if i.get_text().startswith('МОСКВА_СППЗ'):  #Исключение для СППЗ
+                    pass
+                else:
+                    name_systym = i.get_text()  #Свежее "название в системе" с сайта
+                    if name_systym[19:].startswith('('):    #Проверка на начало текста с кросс-кодингом, для большего сокращения текста
+                        name = list_list.name_of_systym_list[-1]
+                        flag = 1
+                        if len(name)==2:    #Проверка на уже существующие пары одного города
+                            list_list.name_of_systym_list.append(delete_text.text(name_systym))
+                        else:   #Если пары нету, то проверяем последний элемент массива с входящим названием в системе
+                            name_two = name
+                            name = name[:3] #Берем первые три буквы последнего названия в массиве
+                            if delete_text.text(name_systym).lower().startswith(name.lower()):   #Делаем нижний регистр для первых символов
+                                list_list.name_of_systym_list.pop(-1)       #Если есть совпадение то удаляем последний элемент массива и 
+                                list_list.name_of_systym_list.append([delete_text.text(name_systym), name_two])  #добавляем "названия в системе" одного города
+                            else:   #Если названия отличаются то добавляем "название" для следующего города
+                                list_list.name_of_systym_list.append(delete_text.text(name_systym))  
+                    else:   #Стандартная запись "название в системе:"
+                        if len(list_list.name_of_systym_list)>0:    #Проверка на пустоту массива с названиями        
+                            name = list_list.name_of_systym_list[-1]
+                            if len(name)==2 or flag == 0:                                #Проверка на уже существующие пары одного города
+                                list_list.name_of_systym_list.append(delete_text.text(name_systym))
+                                flag = 0
+                            else:      #Если пары нету, то проверяем последний элемент массива с входящим названием в системе
+                                name_two = name
+                                name = name[:3]
+                                if delete_text.text(name_systym).lower().startswith(name.lower()) and len(name)>0:
+                                    list_list.name_of_systym_list.pop(-1)
+                                    list_list.name_of_systym_list.append([delete_text.text(name_systym), delete_text.text(name_two)])
+                                else:
+                                    flag = 0
+                                    list_list.name_of_systym_list.append(delete_text.text(name_systym))
+                        else:       #Если названий еще нет в массиве // самая первая проверка // первый элемент
+                            list_list.name_of_systym_list.append(delete_text.text(name_systym))
+
+        for name_city_list, name_of_systym_list in zip(list_list.name_city_list, list_list.name_of_systym_list):
+            list_list.table_matrix_ozon_stock.append([name_city_list, name_of_systym_list])
+
+        print(tabulate(list_list.table_matrix_ozon_stock))
+        driver.quit()
+        
 def sneaker_store(url):
     r = requests.get(url)
     print(r.status_code)

@@ -1,37 +1,35 @@
+import time
+import json
 import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
 from tabulate import tabulate
 import itertools
 import numpy as np
-import time
-import csv
-# Lamoda 
-# https://www.lamoda.ru/c/2968/shoes-krossovki-kedy/?display_locations=outlet&is_sale=1&brands=1061,30349,1163,4035,27481
+import list_list
+from click import click_url
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 
 
-def lamoda_women_sale():
-    table_matrix = [['Название кроссовок', 'Старая цена', 'Новая цена', 'Ссылка на товар']]
-    shop_list = {'Название кроссовок': [],
-                    'Старая цена': [],
-                    'Новая цена': [],
-                    'Ссылка на товар': []}
-    old_price_list = []
-    new_price_list = []
-    link_list = []
-    name_list = []
+def lamoda_catalog(url):
     i = 1
     while True:
-        URL_TEMPLATE = f'https://www.lamoda.ru/c/2968/shoes-krossovki-kedy/?display_locations=outlet&is_sale=1&brands=1061,30349,1163,4035,27481&page={i}'
+        URL_TEMPLATE = url+f'&page={i}'
         r = requests.get(URL_TEMPLATE)
+        
         try:
             if r.status_code == 200:
                 soup = bs(r.text, 'html.parser')
-                # title
+                # title 
                 title_name = soup.find_all('div', class_='x-product-card-description__product-name')
-                if len(title_name)>0:
+                if len(title_name)>0 and i<2:
                     # old_price
                     old_price = soup.find_all('span', class_='x-product-card-description__price-old')
+                    #brand
+                    brand = soup.find_all('div', class_='x-product-card-description__brand-name')
                     # new_price
                     new_price = soup.find_all('span', class_='x-product-card-description__price-new')
                     # img
@@ -40,22 +38,28 @@ def lamoda_women_sale():
                     url_name = soup.find_all('a', class_='x-product-card__link x-product-card__hit-area')
                     LINK_IMG = 'https:'
                     LINK_DOMEN = 'https://www.lamoda.ru'
-                    for name, old_prices, new_prices, url_names in zip(title_name, old_price, new_price, url_name, strict=False):
-                        name_list.append(name.get_text())
-                        old_price_list.append(old_prices.get_text())
-                        new_price_list.append(new_prices.get_text())
-                        url_name_result = LINK_DOMEN + url_names.get('href')   
-                        link_list.append(url_name_result)
-                        table_matrix.append([name.get_text(), old_prices.get_text(), new_prices.get_text(), url_name_result])
-                    print(tabulate(table_matrix))
+                    for name, old_prices, new_prices, url_names, brand_names in zip(title_name, old_price, new_price, url_name, brand, strict=False):
+                        list_list.name_list.append(name.get_text())
+                        list_list.old_price_list.append(old_prices.get_text())
+                        list_list.brand_list.append(brand_names.get_text())
+                        list_list.new_price_list.append(new_prices.get_text())
+                        # сокращение ссылок
+                        url_name_click = LINK_DOMEN + url_names.get('href')   
+                        url_name_result = click_url(url_name_click)
+                        
+                        list_list.link_list.append(url_name_result)
+                        list_list.table_matrix.append([name.get_text(), brand_names.get_text(), old_prices.get_text(), new_prices.get_text(), url_name_result])
+                    print(tabulate(list_list.table_matrix))
                     i += 1
+                    print(i)
                     time.sleep(2)
                 else:
-                    shop_list['Название кроссовок'] = name_list
-                    shop_list['Старая цена'] = old_price_list
-                    shop_list['Новая цена'] = new_price_list
-                    shop_list['Ссылка на товар'] = link_list
-                    df = pd.DataFrame(shop_list)
+                    list_list.shop_list['Название товара'] = list_list.name_list
+                    list_list.shop_list['Брeнд'] = list_list.brand_list
+                    list_list.shop_list['Старая цена'] = list_list.old_price_list
+                    list_list.shop_list['Новая цена'] = list_list.new_price_list
+                    list_list.shop_list['Ссылка на товар'] = list_list.link_list
+                    df = pd.DataFrame(list_list.shop_list)
                     df.to_excel('sneakers.xlsx')
                     print('Конец парсинга, кроссовок больше нет!')
                     break
@@ -65,10 +69,119 @@ def lamoda_women_sale():
         except Exception:
             print('Конец парсинга, ошибка!')
             break
+class Ozon:
+    def ozon_catalog(url):
+        options = Options()
+        options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
+        i = 1
+        while True:
+            driver = webdriver.Chrome()
+            URL = url+f'?page={i}'
+            driver.get(URL)
+            driver.maximize_window()
+            driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
+            time.sleep(1)
+            main_page = driver.page_source
+            soup = bs(main_page, 'html.parser')
+            title_name = soup.find_all('div', class_='b7a ab9 ba9 vi')
+            if len(title_name)>0 and i<10:
+                old_price = soup.find_all('span', class_='c3118-a1 tsBodyControl400Small c3118-b0')
+                new_price = soup.find_all('span', class_='c3118-a1 tsHeadline500Medium c3118-b9')
+                url_name = soup.find_all('a', class_='tile-hover-target vi vi0')
+                for name, old_prices, new_prices, url_names in zip(title_name, old_price, new_price, url_name):
+                    list_list.name_list.append(name.get_text())
+                    list_list.old_price_list.append(old_prices.get_text())
+                    list_list.new_price_list.append(new_prices.get_text())
+                    # сокращение ссылок
+                    url_name_click = list_list.LINK_DOMEN_OZON + url_names.get('href')   
+                    url_name_result = click_url(url_name_click)
+                    list_list.link_list.append(url_name_result)
+                    list_list.table_matrix_ozon.append([name.get_text(), old_prices.get_text(), new_prices.get_text(), url_name_result])
+                print(tabulate(list_list.table_matrix_ozon))
+                driver.quit()
+                time.sleep(1)
+                i+=1
+            else:
+                list_list.shop_list_ozon['Название товара'] = list_list.name_list
+                list_list.shop_list_ozon['Старая цена'] = list_list.old_price_list
+                list_list.shop_list_ozon['Новая цена'] = list_list.new_price_list
+                list_list.shop_list_ozon['Ссылка на товар'] = list_list.link_list
+                df = pd.DataFrame(list_list.shop_list_ozon)
+                df.to_excel('table/xlsx/shop_ozon.xlsx')
+                print('Конец парсинга, товара больше нет!')
+                return driver.quit()
     
+    def ozon_stock():
+        options = Options()
+        options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
+        driver = webdriver.Firefox()
+        URL = 'https://seller-edu.ozon.ru/fbo/warehouses/adresa-skladov-fbo'
+        driver.get(URL)
+        driver.maximize_window()
+        driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
+        time.sleep(3)
+        main_page = driver.page_source
+        soup = bs(main_page, 'html.parser')
+        elem = soup.find_all('p', class_='paragraph paragraph_zFY6U')
+        name_city = soup.find_all('h3', class_='heading_B-bMK heading2 heading2_AQ929 heading-400_UXsA+')
+        
+        for i in name_city:
+            if i.get_text().startswith('Пункты выдачи'):
+                pass
+            else:
+                list_list.name_city_list.append(i.get_text())
+        # обработка текстовых данных с информацией о названии в системе
+        for i in elem:
+            if i.get_text().startswith('Название в системе'):   #проверка на начало названия
+                start_name = i.get_text()
+                if i.get_text().startswith('МОСКВА_СППЗ'):  #Исключение для СППЗ
+                    pass
+                else:
+                    name_systym = i.get_text()  #Свежее "название в системе" с сайта
+                    if name_systym[19:].startswith('('):    #Проверка на начало текста с кросс-кодингом, для большего сокращения текста
+                        name = list_list.name_of_systym_list[-1]
+                        if len(name)==2:    #Проверка на уже существующие пары одного города
+                            list_list.name_of_systym_list.append(name_systym[20:])
+                        else:   #Если пары нету, то проверяем последний элемент массива с входящим названием в системе
+                            name_two = name
+                            name = name[:3] #Берем первые три буквы последнего названия в массиве
+                            if name_systym[53:].lower().startswith(name.lower()):   #Делаем нижний регистр для первых символов
+                                list_list.name_of_systym_list.pop(-1)       #Если есть совпадение то удаляем последний элемент массива и 
+                                list_list.name_of_systym_list.append([name_systym[20:], name_two])  #добавляем "названия в системе" одного города
+                            else:   #Если названия отличаются то добавляем "название" для следующего города
+                                list_list.name_of_systym_list.append(name_systym[20:])  
+                    elif 
+                    else:   #Стандартная запись "название в системе:"
+                        if len(list_list.name_of_systym_list)>0:    #Проверка на пустоту массива с названиями        
+                            name = list_list.name_of_systym_list[-1]
+                            if len(name)==2:                                #Проверка на уже существующие пары одного города
+                                list_list.name_of_systym_list.append(name_systym[20:])
+                            else:      #Если пары нету, то проверяем последний элемент массива с входящим названием в системе
+                                name_two = name
+                                name = name[33:36]
+                                if name_systym[20:].lower().startswith(name.lower()) and len(name)>0:
+                                    list_list.name_of_systym_list.pop(-1)
+                                    list_list.name_of_systym_list.append([name_systym[20:], name_two])
+                                else:
+                                    list_list.name_of_systym_list.append(name_systym[20:])
+                        else:       #Если названий еще нет в массиве // самая первая проверка // первый элемент
+                            list_list.name_of_systym_list.append(name_systym[20:])
+
+        for name_city_list, name_of_systym_list in zip(list_list.name_city_list, list_list.name_of_systym_list):
+            list_list.table_matrix_ozon_stock.append([name_city_list, name_of_systym_list])
+
+        print(tabulate(list_list.table_matrix_ozon_stock))
+        driver.quit()
+        
+def sneaker_store(url):
+    r = requests.get(url)
+    print(r.status_code)
+    
+# https://seller-edu.ozon.ru/document-manager-api.kms/api/v2/seller-edu/document/public/by-path?path=%2Ffbo%2Fwarehouses%2Fadresa-skladov-fbo
 if __name__=='__main__':
-    lamoda_women_sale()
+    Ozon.ozon_stock()
 else:
     print(False)
-    
-  
+
+#     captcha
+#   
