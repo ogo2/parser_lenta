@@ -47,19 +47,23 @@ LINK_DOMEN_OZON = 'https://www.ozon.ru'
 # склады озон
 name_city_list = []
 name_of_systym_list = []
+fact_adres_list = []
+legal_adres_list = []
+yandex_search_list = []
+flags_names = []
 # table_matrix_ozon_stock = [['Название города','Название в системе', 'График работы', 'Фактический адрес',
 #                             'Юридический адрес для указания грузополучателя в УПД-2','Координаты на Яндекс.Картах', 
 #                             'ИНН / КПП склада', 'Р/С', 'GLN', 'GUID', 'Телефон']]
-shop_list_ozon_stock = {'Название города': [],
-                        'Название в системе': [],
-                        'График работы': [],
-                        'Фактический адрес': [],
-                        'Юридический адрес для указания грузополучателя в УПД-2': [],
-                        'Координаты на Яндекс.Картах': [], 
-                        'ИНН / КПП склада': [], 
-                        'Р/С': [], 
-                        'GLN': [], 
-                        'GUID': [], 
-                        'Телефон': []}
+list_ozon_stock = {'Название города': [],
+                    'Название в системе': [],
+                    'Фактический адрес': [],
+                    'Юридический адрес для указания грузополучателя в УПД-2': [],
+                    'Координаты на Яндекс.Картах': []}
 
-table_matrix_ozon_stock = [['Название города','Название в системе']]
+table_matrix_ozon_stock = [['Название города','Название в системе', 
+                            'Фактический адрес', 'Юридический адрес', 'Координаты на Яндекс.Картах']]
+# for name_city_list, name_of_systym_list, fact_adres_list, legal_adres_list, yandex_search_list in zip(list_list.name_city_list, 
+#                                                                                           list_list.name_of_systym_list, 
+#                                                                                           list_list.fact_adres_list, 
+#                                                                                           list_list.legal_adres_list, list_list.yandex_search_list):
+#             list_list.table_matrix_ozon_stock.append([name_city_list, name_of_systym_list, fact_adres_list, legal_adres_list, yandex_search_list])

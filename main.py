@@ -114,7 +114,7 @@ class Ozon:
     def ozon_stock():
         options = Options()
         options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
-        driver = webdriver.Firefox()
+        driver = webdriver.Chrome()
         URL = 'https://seller-edu.ozon.ru/fbo/warehouses/adresa-skladov-fbo'
         driver.get(URL)
         driver.maximize_window()
@@ -124,56 +124,123 @@ class Ozon:
         soup = bs(main_page, 'html.parser')
         elem = soup.find_all('p', class_='paragraph paragraph_zFY6U')
         name_city = soup.find_all('h3', class_='heading_B-bMK heading2 heading2_AQ929 heading-400_UXsA+')
+        flag_name = 0
+        name_city_flag = 0
         
-        for i in name_city:
-            if i.get_text().startswith('Пункты выдачи'):
-                pass
-            else:
-                list_list.name_city_list.append(i.get_text())
         flag = 0
-        # обработка текстовых данных с информацией о названии в системе
-        for i in elem:
-            if i.get_text().startswith('Название в системе'):   #проверка на начало названия
-                start_name = i.get_text()
-                if i.get_text().startswith('МОСКВА_СППЗ'):  #Исключение для СППЗ
-                    pass
-                else:
-                    name_systym = i.get_text()  #Свежее "название в системе" с сайта
-                    if name_systym[19:].startswith('('):    #Проверка на начало текста с кросс-кодингом, для большего сокращения текста
-                        name = list_list.name_of_systym_list[-1]
-                        flag = 1
-                        if len(name)==2:    #Проверка на уже существующие пары одного города
-                            list_list.name_of_systym_list.append(delete_text.text(name_systym))
-                        else:   #Если пары нету, то проверяем последний элемент массива с входящим названием в системе
-                            name_two = name
-                            name = name[:3] #Берем первые три буквы последнего названия в массиве
-                            if delete_text.text(name_systym).lower().startswith(name.lower()):   #Делаем нижний регистр для первых символов
-                                list_list.name_of_systym_list.pop(-1)       #Если есть совпадение то удаляем последний элемент массива и 
-                                list_list.name_of_systym_list.append([delete_text.text(name_systym), name_two])  #добавляем "названия в системе" одного города
-                            else:   #Если названия отличаются то добавляем "название" для следующего города
-                                list_list.name_of_systym_list.append(delete_text.text(name_systym))  
-                    else:   #Стандартная запись "название в системе:"
-                        if len(list_list.name_of_systym_list)>0:    #Проверка на пустоту массива с названиями        
-                            name = list_list.name_of_systym_list[-1]
-                            if len(name)==2 or flag == 0:                                #Проверка на уже существующие пары одного города
-                                list_list.name_of_systym_list.append(delete_text.text(name_systym))
-                                flag = 0
-                            else:      #Если пары нету, то проверяем последний элемент массива с входящим названием в системе
-                                name_two = name
-                                name = name[:3]
-                                if delete_text.text(name_systym).lower().startswith(name.lower()) and len(name)>0:
-                                    list_list.name_of_systym_list.pop(-1)
-                                    list_list.name_of_systym_list.append([delete_text.text(name_systym), delete_text.text(name_two)])
-                                else:
-                                    flag = 0
-                                    list_list.name_of_systym_list.append(delete_text.text(name_systym))
-                        else:       #Если названий еще нет в массиве // самая первая проверка // первый элемент
-                            list_list.name_of_systym_list.append(delete_text.text(name_systym))
-
-        for name_city_list, name_of_systym_list in zip(list_list.name_city_list, list_list.name_of_systym_list):
-            list_list.table_matrix_ozon_stock.append([name_city_list, name_of_systym_list])
-
-        print(tabulate(list_list.table_matrix_ozon_stock))
+        f = 6
+        u = 0
+        g = 0
+        vlans = {"Город": [], "Название в системе": [], "Координаты": [], "Фактический адрес": [], "Юридический адрес": []}
+        
+        for name_ci in name_city:
+            print(tabulate(vlans, headers='keys'))
+            vlans['Город'].append(name_ci.get_text())
+            g = 0
+            while True:
+                try:
+                    if g == 3:
+                        break
+                    lol = elem[f]
+                    i = lol
+                    if i.get_text().startswith('Название в системе'):   #проверка на начало названия
+                        start_name = i.get_text()
+                        if i.get_text().startswith('МОСКВА_СППЗ'):  #Исключение для СППЗ
+                            pass
+                        else:
+                            name_systym = i.get_text()  #Свежее "название в системе" с сайта
+                            if name_systym[19:].startswith('('):    #Проверка на начало текста с кросс-кодингом, для большего сокращения текста
+                                name = vlans['Название в системе'][-1]
+                                flag = 1
+                                if len(name)==2:    #Проверка на уже существующие пары одного города
+                                    vlans['Название в системе'].append(delete_text.text(name_systym))
+                                    f += 1
+                                    continue
+                                else:   #Если пары нету, то проверяем последний элемент массива с входящим названием в системе
+                                    name_two = name
+                                    name = name[:3] #Берем первые три буквы последнего названия в массиве
+                                    if delete_text.text(name_systym).lower().startswith(name.lower()):   #Делаем нижний регистр для первых символов
+                                        vlans['Название в системе'].pop(-1)       #Если есть совпадение то удаляем последний элемент массива и 
+                                        vlans['Название в системе'].append([delete_text.text(name_systym), name_two])  #добавляем "названия в системе" одного города
+                                        f += 1
+                                        continue
+                                    else:   #Если названия отличаются то добавляем "название" для следующего города
+                                        vlans['Название в системе'].append(delete_text.text(name_systym))  
+                                        f += 1
+                                        continue
+                            else:   #Стандартная запись "название в системе:"
+                                if len(vlans['Название в системе'])>0:    #Проверка на пустоту массива с названиями        
+                                    name = vlans['Название в системе'][-1]
+                                    if len(name)==2 or flag == 0:                                #Проверка на уже существующие пары одного города
+                                        vlans['Название в системе'].append(delete_text.text(name_systym))
+                                        f += 1
+                                        flag = 0
+                                        continue
+                                    else:      #Если пары нету, то проверяем последний элемент массива с входящим названием в системе
+                                        name_two = name
+                                        name = name[:3]
+                                        if delete_text.text(name_systym).lower().startswith(name.lower()) and len(name)>0:
+                                            vlans['Название в системе'].pop(-1)
+                                            vlans['Название в системе'].append([delete_text.text(name_systym), delete_text.text(name_two)])
+                                            f += 1
+                                            continue
+                                        else:
+                                            flag = 0
+                                            vlans['Название в системе'].append(delete_text.text(name_systym))
+                                            f += 1
+                                            continue
+                                else:       #Если названий еще нет в массиве // самая первая проверка // первый элемент
+                                    vlans['Название в системе'].append(delete_text.text(name_systym))
+                                    f += 1
+                                    continue
+                    if lol.get_text().startswith('Фактический адрес'):
+                        if len(vlans['Город']) == len(vlans['Фактический адрес']):
+                            break
+                        else:
+                            vlans['Фактический адрес'].append(lol.get_text())
+                            f += 1
+                            g += 1
+                            continue
+                    if lol.get_text().startswith('Юридический адрес'):
+                        if len(vlans['Город']) == len(vlans['Юридический адрес']):
+                            break
+                        else:
+                            vlans['Юридический адрес'].append(lol.get_text())
+                            f += 1
+                            g += 1
+                            continue
+                    if lol.get_text().startswith('Координаты'):
+                        if len(vlans['Город']) == len(vlans['Координаты']):
+                            break
+                        else:
+                            vlans['Координаты'].append(lol.get_text())
+                            g += 1
+                            f += 1
+                            continue
+                    else:
+                        f += 1
+                except Exception:
+                    f-=1
+                    g = 0
+                    break
+            if len(vlans['Город']) != len(vlans['Фактический адрес']):
+                vlans['Фактический адрес'].append('Нет адреса')
+            if len(vlans['Город']) != len(vlans['Юридический адрес']):
+                vlans['Юридический адрес'].append('Нет адреса')
+            if len(vlans['Город']) != len(vlans['Координаты']):
+                vlans['Координаты'].append('Нет адреса')
+                
+        print(tabulate(vlans, headers='keys'))
+        
+        # list_list.list_ozon_stock['Название города'] = list_list.name_city_list
+        # list_list.list_ozon_stock['Название в системе'] = list_list.name_of_systym_list
+        # list_list.list_ozon_stock['Фактический адрес'] = list_list.fact_adres_list
+        # list_list.list_ozon_stock['Юридический адрес для указания грузополучателя в УПД-2'] = list_list.legal_adres_list
+        # list_list.list_ozon_stock['Координаты на Яндекс.Картах'] = list_list.yandex_search_list
+        # df = pd.DataFrame(list_list.list_ozon_stock)
+        # df.to_excel('table/xlsx/stock_ozon.xlsx')
+        # print('Конец парсинга, кроссовок больше нет!')
+        # print(tabulate(list_list.table_matrix_ozon_stock))
         driver.quit()
         
 def sneaker_store(url):
