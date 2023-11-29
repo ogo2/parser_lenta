@@ -131,15 +131,14 @@ class Ozon:
         f = 6
         u = 0
         g = 0
-        vlans = {"Город": [], "Название в системе": [], "Координаты": [], "Фактический адрес": [], "Юридический адрес": []}
+        vlans = {"Город": [], "Название в системе": [], "Координаты": [], "Фактический адрес": [], "Юридический адрес": [], 'ИНН / КПП склада': [], 'Р/С': [], 'Телефон': [], 'GLN': [], 'GUID': []}
         
         for name_ci in name_city:
-            print(tabulate(vlans, headers='keys'))
             vlans['Город'].append(name_ci.get_text())
             g = 0
             while True:
                 try:
-                    if g == 3:
+                    if g == 8:
                         break
                     lol = elem[f]
                     i = lol
@@ -201,7 +200,57 @@ class Ozon:
                             f += 1
                             g += 1
                             continue
-                    if lol.get_text().startswith('Юридический адрес'):
+                    if lol.get_text().startswith('GLN'):
+                        if len(vlans['Город']) == len(vlans['GLN']):
+                            break
+                        else:
+                            vlans['GLN'].append(lol.get_text())
+                            f += 1
+                            g += 1
+                            continue
+                    if lol.get_text().startswith('GUID'):
+                        if len(vlans['Город']) == len(vlans['GUID']):
+                            break
+                        else:
+                            vlans['GUID'].append(lol.get_text())
+                            f += 1
+                            g += 1
+                            continue
+                    if lol.get_text().startswith('Телефон') or lol.get_text().startswith('Контактные телефоны'):
+                        if len(vlans['Город'])==len(vlans['Телефон']):
+                            break
+                        else:
+                            vlans['Телефон'].append(lol.get_text())
+                            f += 1  
+                            
+                            while elem[f].get_text().startswith('+7'):
+                                lol = elem[f]
+                                number = []
+                                number.append(''.join(vlans['Телефон'][-1]))
+                                number.append(delete_text.text(lol.get_text()))
+                                vlans['Телефон'].pop(-1)
+                                vlans['Телефон'].append(''.join(number))
+                                f += 1
+                                
+                            g += 1
+                            continue
+                    if lol.get_text().startswith('ИНН / КПП склада'):
+                        if len(vlans['Город']) == len(vlans['ИНН / КПП склада']):
+                            break
+                        else:
+                            vlans['ИНН / КПП склада'].append(lol.get_text())
+                            f += 1
+                            g += 1
+                            continue
+                    if lol.get_text().startswith('Р/С'):
+                        if len(vlans['Город']) == len(vlans['Р/С']):
+                            break
+                        else:
+                            vlans['Р/С'].append(lol.get_text())
+                            f += 1
+                            g += 1
+                            continue
+                    if lol.get_text().startswith('Юридический адрес для'):
                         if len(vlans['Город']) == len(vlans['Юридический адрес']):
                             break
                         else:
@@ -224,23 +273,26 @@ class Ozon:
                     g = 0
                     break
             if len(vlans['Город']) != len(vlans['Фактический адрес']):
-                vlans['Фактический адрес'].append('Нет адреса')
+                vlans['Фактический адрес'].append('Нет фактического адреса')
             if len(vlans['Город']) != len(vlans['Юридический адрес']):
-                vlans['Юридический адрес'].append('Нет адреса')
+                vlans['Юридический адрес'].append('Нет юридического адреса')
             if len(vlans['Город']) != len(vlans['Координаты']):
-                vlans['Координаты'].append('Нет адреса')
+                vlans['Координаты'].append('Нет координат')
+            if len(vlans['Город']) != len(vlans['ИНН / КПП склада']):
+                vlans['ИНН / КПП склада'].append('Нет ИНН')
+            if len(vlans['Город']) != len(vlans['Р/С']):
+                vlans['Р/С'].append('Нет Р/С')
+            if len(vlans['Город']) != len(vlans['Телефон']):
+                vlans['Телефон'].append('Нет номера телефона')
+            if len(vlans['Город']) != len(vlans['GLN']):
+                vlans['GLN'].append('Нет GLN')
+            if len(vlans['Город']) != len(vlans['GUID']):
+                vlans['GUID'].append('Нет GUID')
                 
-        print(tabulate(vlans, headers='keys'))
+        df = pd.DataFrame(vlans)
+        df.to_excel('table/xlsx/stock_ozon.xlsx')
+        print('Конец парсинга, все склады добавлены в excel!')
         
-        # list_list.list_ozon_stock['Название города'] = list_list.name_city_list
-        # list_list.list_ozon_stock['Название в системе'] = list_list.name_of_systym_list
-        # list_list.list_ozon_stock['Фактический адрес'] = list_list.fact_adres_list
-        # list_list.list_ozon_stock['Юридический адрес для указания грузополучателя в УПД-2'] = list_list.legal_adres_list
-        # list_list.list_ozon_stock['Координаты на Яндекс.Картах'] = list_list.yandex_search_list
-        # df = pd.DataFrame(list_list.list_ozon_stock)
-        # df.to_excel('table/xlsx/stock_ozon.xlsx')
-        # print('Конец парсинга, кроссовок больше нет!')
-        # print(tabulate(list_list.table_matrix_ozon_stock))
         driver.quit()
         
 def sneaker_store(url):
