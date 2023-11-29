@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
 from tabulate import tabulate
+import csv
 import itertools
 import numpy as np
 import list_list
@@ -13,6 +14,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import delete_text
+
+options = Options()
+options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
+driver = webdriver.Chrome()
 
 def lamoda_catalog(url):
     i = 1
@@ -112,9 +117,7 @@ class Ozon:
                 return driver.quit()
     
     def ozon_stock():
-        options = Options()
-        options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
-        driver = webdriver.Chrome()
+        
         URL = 'https://seller-edu.ozon.ru/fbo/warehouses/adresa-skladov-fbo'
         driver.get(URL)
         driver.maximize_window()
@@ -136,6 +139,7 @@ class Ozon:
         for name_ci in name_city:
             vlans['Город'].append(name_ci.get_text())
             g = 0
+            # обработка информации о складах Озон
             while True:
                 try:
                     if g == 8:
@@ -272,6 +276,7 @@ class Ozon:
                     f-=1
                     g = 0
                     break
+            # Проверка существования данных у склада
             if len(vlans['Город']) != len(vlans['Фактический адрес']):
                 vlans['Фактический адрес'].append('Нет фактического адреса')
             if len(vlans['Город']) != len(vlans['Юридический адрес']):
@@ -289,19 +294,21 @@ class Ozon:
             if len(vlans['Город']) != len(vlans['GUID']):
                 vlans['GUID'].append('Нет GUID')
                 
+        
+                
         df = pd.DataFrame(vlans)
-        df.to_excel('table/xlsx/stock_ozon.xlsx')
+        df.to_excel('table/xlsx/stock_ozon.xlsx', index=False)
+        df.to_csv('table/csv/stock_ozon.csv', index=False)
+
         print('Конец парсинга, все склады добавлены в excel!')
         
         driver.quit()
         
-def sneaker_store(url):
-    r = requests.get(url)
-    print(r.status_code)
-    
-# https://seller-edu.ozon.ru/document-manager-api.kms/api/v2/seller-edu/document/public/by-path?path=%2Ffbo%2Fwarehouses%2Fadresa-skladov-fbo
-if __name__=='__main__':
+def main():
     Ozon.ozon_stock()
+    
+if __name__=='__main__':
+    main()
 else:
     print(False)
 
