@@ -19,62 +19,65 @@ options = Options()
 options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
 driver = webdriver.Chrome()
 
-def lamoda_catalog(url):
-    i = 1
-    while True:
-        URL_TEMPLATE = url+f'&page={i}'
-        r = requests.get(URL_TEMPLATE)
-        
-        try:
-            if r.status_code == 200:
-                soup = bs(r.text, 'html.parser')
-                # title 
-                title_name = soup.find_all('div', class_='x-product-card-description__product-name')
-                if len(title_name)>0 and i<2:
-                    # old_price
-                    old_price = soup.find_all('span', class_='x-product-card-description__price-old')
-                    #brand
-                    brand = soup.find_all('div', class_='x-product-card-description__brand-name')
-                    # new_price
-                    new_price = soup.find_all('span', class_='x-product-card-description__price-new')
-                    # img
-                    img_link = soup.find_all('img', class_='x-product-card__pic-img')
-                    # url
-                    url_name = soup.find_all('a', class_='x-product-card__link x-product-card__hit-area')
-                    LINK_IMG = 'https:'
-                    LINK_DOMEN = 'https://www.lamoda.ru'
-                    for name, old_prices, new_prices, url_names, brand_names in zip(title_name, old_price, new_price, url_name, brand, strict=False):
-                        list_list.name_list.append(name.get_text())
-                        list_list.old_price_list.append(old_prices.get_text())
-                        list_list.brand_list.append(brand_names.get_text())
-                        list_list.new_price_list.append(new_prices.get_text())
-                        # сокращение ссылок
-                        url_name_click = LINK_DOMEN + url_names.get('href')   
-                        url_name_result = click_url(url_name_click)
-                        
-                        list_list.link_list.append(url_name_result)
-                        list_list.table_matrix.append([name.get_text(), brand_names.get_text(), old_prices.get_text(), new_prices.get_text(), url_name_result])
-                    print(tabulate(list_list.table_matrix))
-                    i += 1
-                    print(i)
-                    time.sleep(2)
+class Lamoda:
+    def lamoda_catalog(url):
+        i = 1
+        while True:
+            URL_TEMPLATE = url+f'&page={i}'
+            r = requests.get(URL_TEMPLATE)
+            
+            try:
+                if r.status_code == 200:
+                    soup = bs(r.text, 'html.parser')
+                    # title 
+                    title_name = soup.find_all('div', class_='x-product-card-description__product-name')
+                    if len(title_name)>0 and i<2:
+                        # old_price
+                        old_price = soup.find_all('span', class_='x-product-card-description__price-old')
+                        #brand
+                        brand = soup.find_all('div', class_='x-product-card-description__brand-name')
+                        # new_price
+                        new_price = soup.find_all('span', class_='x-product-card-description__price-new')
+                        # img
+                        img_link = soup.find_all('img', class_='x-product-card__pic-img')
+                        # url
+                        url_name = soup.find_all('a', class_='x-product-card__link x-product-card__hit-area')
+                        LINK_IMG = 'https:'
+                        LINK_DOMEN = 'https://www.lamoda.ru'
+                        for name, old_prices, new_prices, url_names, brand_names in zip(title_name, old_price, new_price, url_name, brand, strict=False):
+                            list_list.name_list.append(name.get_text())
+                            list_list.old_price_list.append(old_prices.get_text())
+                            list_list.brand_list.append(brand_names.get_text())
+                            list_list.new_price_list.append(new_prices.get_text())
+                            # сокращение ссылок
+                            url_name_click = LINK_DOMEN + url_names.get('href')   
+                            url_name_result = click_url(url_name_click)
+                            
+                            list_list.link_list.append(url_name_result)
+                            list_list.table_matrix.append([name.get_text(), brand_names.get_text(), old_prices.get_text(), new_prices.get_text(), url_name_result])
+                        print(tabulate(list_list.table_matrix))
+                        i += 1
+                        print(i)
+                        time.sleep(2)
+                    else:
+                        list_list.shop_list['Название товара'] = list_list.name_list
+                        list_list.shop_list['Брeнд'] = list_list.brand_list
+                        list_list.shop_list['Старая цена'] = list_list.old_price_list
+                        list_list.shop_list['Новая цена'] = list_list.new_price_list
+                        list_list.shop_list['Ссылка на товар'] = list_list.link_list
+                        df = pd.DataFrame(list_list.shop_list)
+                        df.to_excel('sneakers.xlsx')
+                        print('Конец парсинга, кроссовок больше нет!')
+                        break
                 else:
-                    list_list.shop_list['Название товара'] = list_list.name_list
-                    list_list.shop_list['Брeнд'] = list_list.brand_list
-                    list_list.shop_list['Старая цена'] = list_list.old_price_list
-                    list_list.shop_list['Новая цена'] = list_list.new_price_list
-                    list_list.shop_list['Ссылка на товар'] = list_list.link_list
-                    df = pd.DataFrame(list_list.shop_list)
-                    df.to_excel('sneakers.xlsx')
-                    print('Конец парсинга, кроссовок больше нет!')
+                    print(r.status_code+'\nОшибка. \тКонец парсинга!')
                     break
-            else:
-                print(r.status_code+'\nОшибка. \тКонец парсинга!')
+            except Exception:
+                print('Конец парсинга, ошибка!')
                 break
-        except Exception:
-            print('Конец парсинга, ошибка!')
-            break
+
 class Ozon:
+    
     def ozon_catalog(url):
         options = Options()
         options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
@@ -139,6 +142,7 @@ class Ozon:
         for name_ci in name_city:
             vlans['Город'].append(name_ci.get_text())
             g = 0
+            
             # обработка информации о складах Озон
             while True:
                 try:
@@ -184,7 +188,7 @@ class Ozon:
                                         name = name[:3]
                                         if delete_text.text(name_systym).lower().startswith(name.lower()) and len(name)>0:
                                             vlans['Название в системе'].pop(-1)
-                                            vlans['Название в системе'].append([delete_text.text(name_systym), delete_text.text(name_two)])
+                                            vlans['Название в системе'].append([delete_text.text(name_systym), delete_text.text(name_two)]) 
                                             f += 1
                                             continue
                                         else:
@@ -200,7 +204,7 @@ class Ozon:
                         if len(vlans['Город']) == len(vlans['Фактический адрес']):
                             break
                         else:
-                            vlans['Фактический адрес'].append(lol.get_text())
+                            vlans['Фактический адрес'].append(delete_text.text(lol.get_text()))
                             f += 1
                             g += 1
                             continue
@@ -208,7 +212,7 @@ class Ozon:
                         if len(vlans['Город']) == len(vlans['GLN']):
                             break
                         else:
-                            vlans['GLN'].append(lol.get_text())
+                            vlans['GLN'].append(delete_text.text(lol.get_text()))
                             f += 1
                             g += 1
                             continue
@@ -216,7 +220,7 @@ class Ozon:
                         if len(vlans['Город']) == len(vlans['GUID']):
                             break
                         else:
-                            vlans['GUID'].append(lol.get_text())
+                            vlans['GUID'].append(delete_text.text(lol.get_text()))
                             f += 1
                             g += 1
                             continue
@@ -242,7 +246,7 @@ class Ozon:
                         if len(vlans['Город']) == len(vlans['ИНН / КПП склада']):
                             break
                         else:
-                            vlans['ИНН / КПП склада'].append(lol.get_text())
+                            vlans['ИНН / КПП склада'].append(delete_text.text(lol.get_text()))
                             f += 1
                             g += 1
                             continue
@@ -250,7 +254,7 @@ class Ozon:
                         if len(vlans['Город']) == len(vlans['Р/С']):
                             break
                         else:
-                            vlans['Р/С'].append(lol.get_text())
+                            vlans['Р/С'].append(delete_text.text(lol.get_text()))
                             f += 1
                             g += 1
                             continue
@@ -258,7 +262,7 @@ class Ozon:
                         if len(vlans['Город']) == len(vlans['Юридический адрес']):
                             break
                         else:
-                            vlans['Юридический адрес'].append(lol.get_text())
+                            vlans['Юридический адрес'].append(delete_text.text(lol.get_text()))
                             f += 1
                             g += 1
                             continue
@@ -266,7 +270,7 @@ class Ozon:
                         if len(vlans['Город']) == len(vlans['Координаты']):
                             break
                         else:
-                            vlans['Координаты'].append(lol.get_text())
+                            vlans['Координаты'].append(delete_text.text(lol.get_text()))
                             g += 1
                             f += 1
                             continue
@@ -293,7 +297,12 @@ class Ozon:
                 vlans['GLN'].append('Нет GLN')
             if len(vlans['Город']) != len(vlans['GUID']):
                 vlans['GUID'].append('Нет GUID')
-                
+        # если названий несколько, то они добавлены в таблицу с помощью массива, цикл проходит по всей таблицы и форматирует массивы в строки
+        for i in range(len(vlans['Название в системе'])):
+            if type(vlans['Название в системе'][i]) is list:
+                f = vlans['Название в системе'][i]
+                vlans['Название в системе'].pop(i)
+                vlans['Название в системе'].insert(i, ', '.join(f))
         
                 
         df = pd.DataFrame(vlans)
@@ -303,9 +312,22 @@ class Ozon:
         print('Конец парсинга, все склады добавлены в excel!')
         
         driver.quit()
+
+class Wildberries:
+    #link of JSON wb
+    
+    #https://catalog.wb.ru/catalog/toys5/catalog?TestGroup=no_test&TestID=no_test&action=170902&appType=1&cat=9541&curr=rub&dest=-1257786&page=3&sort=popular&spp=26
+    #/catalog/toys5/catalog
+    #https://catalog.wb.ru/catalog/electronic14/catalog?TestGroup=no_test&TestID=no_test&action=170902&appType=1&cat=9835&curr=rub&dest=-1257786&page=3&sort=popular&spp=26
+    def wildberries_catalog(url):
+        
+        # URL = url+f'/&page={i}'
+        r = requests.get(url).json()
+        print(r)
+       
         
 def main():
-    Ozon.ozon_stock()
+    Wildberries.wildberries_catalog('https://catalog.wb.ru/catalog/electronic14/catalog?TestGroup=no_test&TestID=no_test&action=170902&appType=1&cat=9835&curr=rub&dest=-1257786&page=3&sort=popular&spp=26')
     
 if __name__=='__main__':
     main()
