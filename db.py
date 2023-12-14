@@ -5,7 +5,7 @@ formatted_date = now.strftime('%Y-%m-%d %H:%M:%S')
 print(formatted_date)
 try:
     # пытаемся подключиться к базе данных
-    conn = psycopg2.connect('postgres://isrzeyjx:P4wzfAfwaiJmP_zCdYuvVPp0fcMkBvXl@cornelius.db.elephantsql.com/isrzeyjx')
+    conn = psycopg2.connect('postgres:')
     
     
 except:
