@@ -14,18 +14,17 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import delete_text
-
-options = Options()
-options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
-driver = webdriver.Chrome()
+import db
+# options = Options()
+# options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
+# driver = webdriver.Chrome()
 
 class Lamoda:
-    def lamoda_catalog(url):
+    def lamoda_catalog(self, url: str):
         i = 1
         while True:
-            URL_TEMPLATE = url+f'&page={i}'
+            URL_TEMPLATE = url
             r = requests.get(URL_TEMPLATE)
-            
             try:
                 if r.status_code == 200:
                     soup = bs(r.text, 'html.parser')
@@ -44,27 +43,32 @@ class Lamoda:
                         url_name = soup.find_all('a', class_='x-product-card__link x-product-card__hit-area')
                         LINK_IMG = 'https:'
                         LINK_DOMEN = 'https://www.lamoda.ru'
-                        for name, old_prices, new_prices, url_names, brand_names in zip(title_name, old_price, new_price, url_name, brand, strict=False):
+                        for name, old_prices, new_prices, url_names, brand_names, img_link in zip(title_name, old_price, new_price, url_name, brand, img_link, strict=False):
                             list_list.name_list.append(name.get_text())
-                            list_list.old_price_list.append(old_prices.get_text())
-                            list_list.brand_list.append(brand_names.get_text())
-                            list_list.new_price_list.append(new_prices.get_text())
+                            list_list.old_price_list.append(''.join(filter(str.isnumeric, old_prices.get_text())))
+                            brand_names = brand_names.get_text().replace("'", "`")
+                            list_list.brand_list.append(brand_names)
+                            list_list.new_price_list.append(''.join(filter(str.isnumeric, new_prices.get_text())))
                             # сокращение ссылок
                             url_name_click = LINK_DOMEN + url_names.get('href')   
-                            url_name_result = click_url(url_name_click)
+                            # url_name_result = click_url(url_name_click)
                             
-                            list_list.link_list.append(url_name_result)
-                            list_list.table_matrix.append([name.get_text(), brand_names.get_text(), old_prices.get_text(), new_prices.get_text(), url_name_result])
+                            url_img_click = LINK_IMG + img_link.get('src')
+                            # url_img_result = click_url(url_img_click)
+                            
+                            list_list.link_list.append(url_name_click)
+                            list_list.link_img_list.append(url_img_click)
+                            list_list.table_matrix.append([name.get_text(), brand_names, old_prices.get_text(), new_prices.get_text(), url_name_click, url_img_click])
                         print(tabulate(list_list.table_matrix))
                         i += 1
                         print(i)
-                        time.sleep(2)
                     else:
                         list_list.shop_list['Название товара'] = list_list.name_list
                         list_list.shop_list['Брeнд'] = list_list.brand_list
                         list_list.shop_list['Старая цена'] = list_list.old_price_list
                         list_list.shop_list['Новая цена'] = list_list.new_price_list
                         list_list.shop_list['Ссылка на товар'] = list_list.link_list
+                        list_list.shop_list['Ссылка на фото'] = list_list.link_img_list
                         df = pd.DataFrame(list_list.shop_list)
                         df.to_excel('sneakers.xlsx')
                         print('Конец парсинга, кроссовок больше нет!')
@@ -74,8 +78,13 @@ class Lamoda:
                     break
             except Exception:
                 print('Конец парсинга, ошибка!')
-                break
-
+                raise Exception('error')
+        for name, old_prices, new_prices, url_names, brand_names, img_link in zip(list_list.shop_list['Название товара'], list_list.shop_list['Старая цена'], 
+                                                                                  list_list.shop_list['Новая цена'], list_list.shop_list['Ссылка на товар'],
+                                                                                  list_list.shop_list['Брeнд'], list_list.shop_list['Ссылка на фото']):
+            db.add_product(name, img_link, new_prices, old_prices, url_names, 'men', brand_names)
+        print('good db')
+            
 class Ozon:
     
     def ozon_catalog(url):
@@ -327,7 +336,7 @@ class Wildberries:
        
         
 def main():
-    Wildberries.wildberries_catalog('https://catalog.wb.ru/catalog/electronic14/catalog?TestGroup=no_test&TestID=no_test&action=170902&appType=1&cat=9835&curr=rub&dest=-1257786&page=3&sort=popular&spp=26')
+    Lamoda().lamoda_catalog('https://www.lamoda.ru/c/2981/shoes-krossovk-kedy-muzhskie/?brands=570')
     
 if __name__=='__main__':
     main()
