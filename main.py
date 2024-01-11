@@ -14,6 +14,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.action_chains import ActionChains
 import delete_text
 # import db
 # options = Options()
@@ -22,27 +23,38 @@ import delete_text
 
 class BrandShop:
     def brandshop_catalog(self, url: str):
+        
         i = 1
         while True:
+            
             URL_TEMPLATE = url+f'&page={i}'
             r = requests.get(URL_TEMPLATE)
-            html = r.content
+            driver = webdriver.Firefox()
+            driver.get(URL_TEMPLATE)
+            driver.maximize_window()
+            for f in range(100):
+                driver.execute_script("window.scrollBy(0, 100);")
+                time.sleep(0.1) 
+            main_page = driver.page_source
+
+            driver.quit()
             if r.status_code == 200:
-                soup = bs(r.text, 'html.parser')
+                soup = bs(main_page, 'html.parser')
                
                 title_name = soup.find_all('div', class_='product-card__title')
-                if len(title_name)>0 and i<2:
+                if len(title_name)>0 and i<6:
                     old_price = soup.find_all('span', class_='product-card__price_old')
                     new_price = soup.find_all('div', class_='product-card__price_new')
                     # img_link = soup.find_all('img', class_='lazyLoad')
-                    img_link = soup.select('picture > img')
+                    # img_link = soup.find_all('img', zclass_='lazyLoad isLoaded')
+                    img_link = soup.select('div:nth-child(1) > div:nth-child(1) > picture:nth-child(1) > img:nth-child(1)')
                     url_name = soup.find_all('a', class_='product-card__link')
                     brand = soup.find_all('div', class_='product-card__title')
 
                     LINK_IMG = 'https:'
                     LINK_DOMEN = 'https://brandshop.ru'
                     
-                    for name, old_prices, new_prices, url_names, brand_names, img_link in zip(title_name, old_price, new_price, url_name, brand, img_link, strict=False):
+                    for name, old_prices, new_prices, url_names, brand_names, img_link in zip(title_name, old_price, new_price, url_name, brand, img_link):
                         list_list.name_list.append(name.contents[2].get_text().strip())
                         list_list.old_price_list.append(''.join(filter(str.isnumeric, old_prices.get_text())))
                         brand_names = brand_names.contents[0].strip()
@@ -52,7 +64,7 @@ class BrandShop:
                         url_name_click = LINK_DOMEN + url_names.get('href')   
                         # url_name_result = click_url(url_name_click)
                         
-                        url_img_click = LINK_IMG + img_link.get('src')
+                        url_img_click = img_link.get('src')
                         # url_img_result = click_url(url_img_click)
                         
                         list_list.link_list.append(url_name_click)
@@ -393,7 +405,7 @@ class Wildberries:
        
         
 def main():
-    BrandShop().brandshop_catalog('https://brandshop.ru/sale/obuv/krossovki/?mfp=17-pol%5B%D0%9C%D1%83%D0%B6%D1%81%D0%BA%D0%BE%D0%B9%5D')
+    BrandShop().brandshop_catalog('https://brandshop.ru/sale/obuv/krossovki/?mfp=17-pol%5B%D0%9C%D1%83%D0%B6%D1%81%D0%BA%D0%BE%D0%B9,%D0%96%D0%B5%D0%BD%D1%81%D0%BA%D0%B8%D0%B9%5D')
     # Lamoda().lamoda_catalog('https://www.lamoda.ru/c/2981/shoes-krossovk-kedy-muzhskie/?brands=570')
     
 if __name__=='__main__':
