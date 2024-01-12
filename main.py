@@ -21,6 +21,44 @@ import delete_text
 # options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36')
 # driver = webdriver.Chrome()
 
+class SuperStep:
+    def superstep_catalog(self, url: str):
+        i = 1
+        while True:
+            URL_TEMPLATE = url+f'?PAGEN_1={i}'
+            r = requests.get(URL_TEMPLATE)
+            if r.status_code == 200:
+                soup = bs(r.text, 'html.parser')
+                title_name = soup.find_all('a', class_='js-catalog-card-click')
+                if len(title_name)>0 and i<2:
+                    old_price = soup.find_all('span', class_='product-list-price')
+                    new_price = soup.find_all('span', class_='product-sale-price')
+                    img_link = soup.find_all('img', class_='product-item-image product-item-image_first')
+                    url_name = soup.find_all('a', class_='cur_p js-catalog-card-click')
+                    brand = soup.find_all('a', class_='js-catalog-card-click')
+
+                    LINK_IMG = 'https://superstep.ru'
+                    LINK_DOMEN = 'https://superstep.ru'
+                    title_name.pop(0)
+                    for name, old_prices, new_prices, url_names, brand_names, img_link in zip(title_name, old_price, new_price, url_name, brand, img_link):
+                        list_list.name_list.append(name.contents[1].get_text())
+                        list_list.old_price_list.append(''.join(filter(str.isnumeric, old_prices.get_text())))
+                        list_list.brand_list.append(name.contents[0].get_text().strip())
+                        list_list.new_price_list.append(''.join(filter(str.isnumeric, new_prices.get_text())))
+                        # сокращение ссылок
+                        url_name_click = LINK_DOMEN + url_names.get('href')   
+                        # url_name_result = click_url(url_name_click)
+                        
+                        url_img_click = LINK_IMG + img_link.get('src')
+                        # url_img_result = click_url(url_img_click)
+                        
+                        list_list.link_list.append(url_name_click)
+                        list_list.link_img_list.append(url_img_click)
+                        list_list.table_matrix.append([name.contents[1].get_text(), name.contents[0].get_text(), old_prices.get_text(), new_prices.get_text(), url_name_click, url_img_click])
+                    print(tabulate(list_list.table_matrix))
+                    # i += 1
+                break
+            
 class BrandShop:
     def brandshop_catalog(self, url: str):
         
@@ -29,7 +67,7 @@ class BrandShop:
             
             URL_TEMPLATE = url+f'&page={i}'
             r = requests.get(URL_TEMPLATE)
-            driver = webdriver.Firefox()
+            driver = webdriver.Chrome()
             driver.get(URL_TEMPLATE)
             driver.maximize_window()
             for f in range(100):
@@ -86,6 +124,10 @@ class BrandShop:
             else:
                 print(404)
                 break
+        # for name, old_prices, new_prices, url_names, brand_names, img_link in zip(list_list.shop_list['Название товара'], list_list.shop_list['Старая цена'], 
+        #                                                                           list_list.shop_list['Новая цена'], list_list.shop_list['Ссылка на товар'],
+        #                                                                           list_list.shop_list['Брeнд'], list_list.shop_list['Ссылка на фото']):
+        #     db.add_product(name, img_link, new_prices, old_prices, url_names, 'men', brand_names)
         print('Больше нет страниц!')
         
 class Lamoda:
@@ -148,10 +190,10 @@ class Lamoda:
             except Exception:
                 print('Конец парсинга, ошибка!')
                 raise Exception('error')
-        # for name, old_prices, new_prices, url_names, brand_names, img_link in zip(list_list.shop_list['Название товара'], list_list.shop_list['Старая цена'], 
-        #                                                                           list_list.shop_list['Новая цена'], list_list.shop_list['Ссылка на товар'],
-        #                                                                           list_list.shop_list['Брeнд'], list_list.shop_list['Ссылка на фото']):
-        #     db.add_product(name, img_link, new_prices, old_prices, url_names, 'men', brand_names)
+        for name, old_prices, new_prices, url_names, brand_names, img_link in zip(list_list.shop_list['Название товара'], list_list.shop_list['Старая цена'], 
+                                                                                  list_list.shop_list['Новая цена'], list_list.shop_list['Ссылка на товар'],
+                                                                                  list_list.shop_list['Брeнд'], list_list.shop_list['Ссылка на фото']):
+            db.add_product(name, img_link, new_prices, old_prices, url_names, 'men', brand_names)
         print('good db')
             
 class Ozon:
@@ -405,7 +447,8 @@ class Wildberries:
        
         
 def main():
-    BrandShop().brandshop_catalog('https://brandshop.ru/sale/obuv/krossovki/?mfp=17-pol%5B%D0%9C%D1%83%D0%B6%D1%81%D0%BA%D0%BE%D0%B9,%D0%96%D0%B5%D0%BD%D1%81%D0%BA%D0%B8%D0%B9%5D')
+    SuperStep().superstep_catalog('https://superstep.ru/new-collection/filter/kategoriya-is-%D0%BA%D1%80%D0%BE%D1%81%D1%81%D0%BE%D0%B2%D0%BA%D0%B8/apply/')
+    # BrandShop().brandshop_catalog('https://brandshop.ru/sale/obuv/krossovki/?mfp=17-pol%5B%D0%9C%D1%83%D0%B6%D1%81%D0%BA%D0%BE%D0%B9%5D')
     # Lamoda().lamoda_catalog('https://www.lamoda.ru/c/2981/shoes-krossovk-kedy-muzhskie/?brands=570')
     
 if __name__=='__main__':
