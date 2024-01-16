@@ -1,14 +1,15 @@
 import requests
-from urllib.request import urlopen
-from lxml import etree
-# get html from site and write to local file
-url = 'https://brandshop.ru/sale/obuv/krossovki/?mfp=17-pol%5B%D0%9C%D1%83%D0%B6%D1%81%D0%BA%D0%BE%D0%B9%5D'
-headers = {'Content-Type': 'text/html',}
-response = requests.get(url, headers=headers)
-html = f"""{response.text}"""
+# from fake_useragent import UserAgent
 
-htmlparser = etree.HTMLParser()
-tree = etree.parse(html, htmlparser)
+headers = {
+    'Referer': 'https://street-beat.ru/cat/man/sale/',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Content-Type': 'application/x-www-form-urlencoded',
+}
 
-fuck = tree.xpath('/html/body/div[3]/div/div/main/div/div[2]/div[2]/div/div[1]/a/div/div[1]/picture/img')
-print(fuck)
+data = '{"pagination":{"page":2},"sorting":{"key":"sort","value":"desc"},"seo":{"uri":"/cat/man/sale/"},"search":""}'
+
+response = requests.post('https://street-beat.ru/api/catalog/page', headers=headers, data=data)
+
+print(response.text)
