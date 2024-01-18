@@ -23,11 +23,11 @@ class ShopoTam:
     def shopotam_catalog():
         o = 1
         while True:
-            r = requests.get(f'https://shopotam.ru/r-mens-sports-shoes/sale?page={o}')
+            r = requests.get(f'https://shopotam.ru/r-mens-running-shoes/sale?page={o}')
             soup = bs(r.text, 'html.parser')
             
             title_name = soup.find_all('div', class_='product-listing-card-info control-200 tablet-small:control-350 weight-medium product-listing-card-info_line-clamp_2')
-            if len(title_name)>0 and o<2:
+            if len(title_name)>0 and o<10:
                 old_price = soup.find_all('s', class_='product-listing-card-prices__old-price control-200 tablet-small:control-250 weight-heavy')
                 new_price = soup.find_all('span', class_='product-listing-card-prices__price control-350 tablet-small:control-600 weight-heavy product-listing-card-prices__price_profit')
                 img_link = soup.find_all('img', class_='product-listing-card__image')
@@ -62,10 +62,9 @@ class ShopoTam:
         for name, old_prices, new_prices, url_names, brand_names, img_link in zip(list_list.shop_list['Название товара'], list_list.shop_list['Старая цена'], 
                                                                                   list_list.shop_list['Новая цена'], list_list.shop_list['Ссылка на товар'],
                                                                                   list_list.shop_list['Брeнд'], list_list.shop_list['Ссылка на фото']):
-            for i in range(len(name)):
-                if name[i] == "'":
-                    name = name.replace("'", "`")
-                    print(name)
+
+            name = name.replace("'", "`")
+            brand_names = brand_names.replace("'", "`")
             db.add_product(name, img_link, new_prices, old_prices, url_names, 'man', brand_names)
             print('Good add db!', name)
         print('Конец!')
@@ -147,6 +146,8 @@ class StreetBeat:
         for name, old_prices, new_prices, url_names, brand_names, img_link in zip(list_list.shop_list['Название товара'], list_list.shop_list['Старая цена'], 
                                                                                   list_list.shop_list['Новая цена'], list_list.shop_list['Ссылка на товар'],
                                                                                   list_list.shop_list['Брeнд'], list_list.shop_list['Ссылка на фото']):
+            name = name.replace("'", "`")
+            brand_names = brand_names.replace("'", "`")
             db.add_product(name, img_link, new_prices, old_prices, url_names, sex, brand_names)
             print('Good add db!')
 
@@ -206,7 +207,10 @@ class SuperStep:
         for name, old_prices, new_prices, url_names, brand_names, img_link in zip(list_list.shop_list['Название товара'], list_list.shop_list['Старая цена'], 
                                                                                   list_list.shop_list['Новая цена'], list_list.shop_list['Ссылка на товар'],
                                                                                   list_list.shop_list['Брeнд'], list_list.shop_list['Ссылка на фото']):
-            db.add_product(name, img_link, new_prices, old_prices, url_names, 'men', brand_names)
+            name = name.replace("'", "`")
+            brand_names = brand_names.replace("'", "`")
+            db.add_product(name, img_link, new_prices, old_prices, url_names, 'women', brand_names)
+            print('good add db!-->', name)
         print('Больше нет страниц!')
         
 class BrandShop:
@@ -285,6 +289,8 @@ class BrandShop:
         for name, old_prices, new_prices, url_names, brand_names, img_link in zip(list_list.shop_list['Название товара'], list_list.shop_list['Старая цена'], 
                                                                                   list_list.shop_list['Новая цена'], list_list.shop_list['Ссылка на товар'],
                                                                                   list_list.shop_list['Брeнд'], list_list.shop_list['Ссылка на фото']):
+            name = name.replace("'", "`")
+            brand_names = brand_names.replace("'", "`")
             db.add_product(name, img_link, new_prices, old_prices, url_names, 'women', brand_names)
         print('Больше нет страниц!')
         
@@ -351,6 +357,8 @@ class Lamoda:
         for name, old_prices, new_prices, url_names, brand_names, img_link in zip(list_list.shop_list['Название товара'], list_list.shop_list['Старая цена'], 
                                                                                   list_list.shop_list['Новая цена'], list_list.shop_list['Ссылка на товар'],
                                                                                   list_list.shop_list['Брeнд'], list_list.shop_list['Ссылка на фото']):
+            name = name.replace("'", "`")
+            brand_names = brand_names.replace("'", "`")
             db.add_product(name, img_link, new_prices, old_prices, url_names, 'men', brand_names)
         print('good db')
             
@@ -605,9 +613,9 @@ class Wildberries:
        
         
 def main():
-    ShopoTam.shopotam_catalog()
+    # ShopoTam.shopotam_catalog()
     # StreetBeat().streetbeat_catalog('woman')
-    # SuperStep().superstep_catalog('https://superstep.ru/sale/filter/kategoriya-is-%D0%BA%D1%80%D0%BE%D1%81%D1%81%D0%BE%D0%B2%D0%BA%D0%B8/gender-is-%D0%BC%D1%83%D0%B6%D1%87%D0%B8%D0%BD%D0%B0%D0%BC/apply/')
+    SuperStep().superstep_catalog('https://superstep.ru/sale/filter/gender-is-%D0%B6%D0%B5%D0%BD%D1%89%D0%B8%D0%BD%D0%B0%D0%BC/kategoriya-is-%D0%BA%D1%80%D0%BE%D1%81%D1%81%D0%BE%D0%B2%D0%BA%D0%B8/apply/')
     # BrandShop().brandshop_catalog('https://brandshop.ru/sale/obuv/krossovki/?mfp=17-pol%5B%D0%96%D0%B5%D0%BD%D1%81%D0%BA%D0%B8%D0%B9%5D')
     # Lamoda().lamoda_catalog('https://www.lamoda.ru/c/2981/shoes-krossovk-kedy-muzhskie/?brands=570')
     
