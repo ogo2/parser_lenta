@@ -235,12 +235,12 @@ class BrandShop:
                 soup = bs(main_page, 'html.parser')
                
                 title_name = soup.find_all('div', class_='product-card__title')
-                if len(title_name)>0 and i<6:
+                if len(title_name)>0 and i<15:
                     old_price = soup.find_all('span', class_='product-card__price_old')
                     new_price = soup.find_all('div', class_='product-card__price_new')
                     # img_link = soup.find_all('img', class_='lazyLoad')
                     # img_link = soup.find_all('img', zclass_='lazyLoad isLoaded')
-                    img_link = soup.select('div:nth-child(1) > div:nth-child(1) > picture:nth-child(1) > img:nth-child(1)')
+                    img_link = soup.select('div > div.product-card__img._ibg > picture > img')
                     url_name = soup.find_all('a', class_='product-card__link')
                     brand = soup.find_all('div', class_='product-card__title')
 
@@ -292,21 +292,21 @@ class BrandShop:
                                                                                   list_list.shop_list['Брeнд'], list_list.shop_list['Ссылка на фото']):
             name = name.replace("'", "`")
             brand_names = brand_names.replace("'", "`")
-            db.add_product(name, img_link, new_prices, old_prices, url_names, 'women', brand_names)
+            db.add_product(name, img_link, new_prices, old_prices, url_names, 'man', brand_names)
         print('Больше нет страниц!')
         
 class Lamoda:
     def lamoda_catalog(self, url: str):
         i = 1
         while True:
-            URL_TEMPLATE = url
+            URL_TEMPLATE = url+f'&page={i}'
             r = requests.get(URL_TEMPLATE)
             try:
                 if r.status_code == 200:
                     soup = bs(r.text, 'html.parser')
                     # title 
                     title_name = soup.find_all('div', class_='x-product-card-description__product-name')
-                    if len(title_name)>0 and i<5:
+                    if len(title_name)>0 and i<15:
                         # old_price
                         old_price = soup.find_all('span', class_='x-product-card-description__price-old')
                         #brand
@@ -360,8 +360,10 @@ class Lamoda:
                                                                                   list_list.shop_list['Брeнд'], list_list.shop_list['Ссылка на фото']):
             name = name.replace("'", "`")
             brand_names = brand_names.replace("'", "`")
-            db.add_product(name, img_link, new_prices, old_prices, url_names, 'man', brand_names)
+            db.add_product(name, img_link, new_prices, old_prices, url_names, 'women', brand_names)
             print('good db')
+            time.sleep(0.5)
+        print('The end')
             
 
    
@@ -369,9 +371,9 @@ class Lamoda:
 def main():
     # ShopoTam.shopotam_catalog()
     # StreetBeat().streetbeat_catalog('woman')
-    # SuperStep().superstep_catalog('https://superstep.ru/sale/filter/gender-is-%D0%B6%D0%B5%D0%BD%D1%89%D0%B8%D0%BD%D0%B0%D0%BC/kategoriya-is-%D0%BA%D1%80%D0%BE%D1%81%D1%81%D0%BE%D0%B2%D0%BA%D0%B8/apply/')
-    # BrandShop().brandshop_catalog('https://brandshop.ru/sale/obuv/krossovki/?mfp=17-pol%5B%D0%96%D0%B5%D0%BD%D1%81%D0%BA%D0%B8%D0%B9%5D')
-    Lamoda().lamoda_catalog('https://www.lamoda.ru/c/2981/shoes-krossovk-kedy-muzhskie/?is_sale=1&display_locations=outlet&sitelink=topmenuM&l=4')
+    SuperStep().superstep_catalog('https://superstep.ru/sale/filter/kategoriya-is-%D0%BA%D0%B5%D0%B4%D1%8B-or-%D0%BA%D1%80%D0%BE%D1%81%D1%81%D0%BE%D0%B2%D0%BA%D0%B8/gender-is-%D0%B6%D0%B5%D0%BD%D1%89%D0%B8%D0%BD%D0%B0%D0%BC/apply/')
+    # BrandShop().brandshop_catalog('https://brandshop.ru/sale/?mfp=83-kategoriya%5B%D0%9A%D0%B5%D0%B4%D1%8B,%D0%9A%D1%80%D0%BE%D1%81%D1%81%D0%BE%D0%B2%D0%BA%D0%B8%5D')
+    # Lamoda().lamoda_catalog('https://www.lamoda.ru/c/2968/shoes-krossovki-kedy/?is_sale=1&display_locations=outlet&sitelink=topmenuW&l=7')
     
 if __name__=='__main__':
     main()

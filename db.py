@@ -12,4 +12,4 @@ def add_product(name: str, photo_path: str, price: float, old_price: float, url_
     cursor.execute(sql)
     conn.commit()
     cursor.close()
-    return conn.close()
+    conn.close()
