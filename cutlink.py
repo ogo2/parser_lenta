@@ -26,3 +26,15 @@ def brandshop_admitad(url: str):
 def shopotam_admitad(url: str):   
     res = client.DeeplinksManage.create(2610012, 26887, ulp=url, subid='AS32djkd31')
     return res[0]
+
+def urbanvibes_admitad(url: str):   
+    res = client.DeeplinksManage.create(2610012, 25929, ulp=url, subid='AS32djkd31')
+    return res[0]
+
+def elyts_admitad(url: str):   
+    res = client.DeeplinksManage.create(2610012, 14482, ulp=url, subid='watch')
+    return res[0]
+
+def bestwatch_admitad(url: str):   
+    res = client.DeeplinksManage.create(2610012, 1950, ulp=url, subid='watch')
+    return res[0]
